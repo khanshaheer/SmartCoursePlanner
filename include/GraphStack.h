@@ -1,3 +1,4 @@
+
 #ifndef GRAPH_STACK_H
 #define GRAPH_STACK_H
 
@@ -8,18 +9,59 @@ private:
     {
         int data;
         Node* next;
+
+        Node(int value)
+        {
+            data = value;
+            next = NULL;
+        }
     };
 
     Node* topNode;
 
 public:
-    GraphStack();
-    ~GraphStack();
+    GraphStack()
+    {
+        topNode = NULL;
+    }
 
-    void push(int value);
-    int pop();
+    ~GraphStack()
+    {
+        int value;
 
-    bool isEmpty() const;
+        while (pop(value))
+        {
+        }
+    }
+
+    bool isEmpty() const
+    {
+        return topNode == NULL;
+    }
+
+    void push(int value)
+    {
+        Node* newNode = new Node(value);
+
+        newNode->next = topNode;
+        topNode = newNode;
+    }
+
+    bool pop(int& value)
+    {
+        if (isEmpty())
+        {
+            return false;
+        }
+
+        Node* temp = topNode;
+        value = temp->data;
+
+        topNode = topNode->next;
+
+        delete temp;
+        return true;
+    }
 };
 
 #endif

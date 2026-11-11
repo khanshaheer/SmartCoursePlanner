@@ -1,8 +1,11 @@
+
 #ifndef COURSE_GRAPH_H
 #define COURSE_GRAPH_H
 
+#include <iostream>
 #include "DynamicArray.h"
-#include "CourseDatabase.h"
+
+using namespace std;
 
 class CourseGraph
 {
@@ -12,6 +15,12 @@ private:
     {
         int courseID;
         Edge* next;
+
+        Edge(int id)
+        {
+            courseID = id;
+            next = NULL;
+        }
     };
 
     struct Vertex
@@ -19,6 +28,13 @@ private:
         int courseID;
         Edge* firstEdge;
         Vertex* next;
+
+        Vertex(int id)
+        {
+            courseID = id;
+            firstEdge = NULL;
+            next = NULL;
+        }
     };
 
     Vertex* head;
@@ -33,21 +49,15 @@ private:
     ) const;
 
 public:
+
     CourseGraph();
     ~CourseGraph();
 
     bool addCourse(int courseID);
     bool removeCourse(int courseID);
 
-    bool addPrerequisite(
-        int courseID,
-        int prerequisiteID
-    );
-
-    bool removePrerequisite(
-        int courseID,
-        int prerequisiteID
-    );
+    bool addPrerequisite(int courseID, int prerequisiteID);
+    bool removePrerequisite(int courseID, int prerequisiteID);
 
     void displayPrerequisites(int courseID) const;
     void displayDependents(int courseID) const;
@@ -57,9 +67,7 @@ public:
 
     bool hasCycle() const;
 
-    bool topologicalSort(
-        DynamicArray<int>& order
-    ) const;
+    bool topologicalSort(DynamicArray<int>& order) const;
 
     bool getPrerequisites(
         int courseID,

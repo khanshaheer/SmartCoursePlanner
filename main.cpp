@@ -1,59 +1,67 @@
-#include <iostream>
 
-#include "CourseDatabase.h"
+#include <iostream>
 #include "CourseGraph.h"
-#include "StudentPlanner.h"
 
 using namespace std;
 
-void adminMenu()
-{
-    cout << "\n===== ADMINISTRATOR MENU =====\n";
-}
-
-void studentMenu()
-{
-    cout << "\n===== STUDENT MENU =====\n";
-}
-
 int main()
 {
-    CourseDatabase database;
     CourseGraph graph;
 
-    StudentPlanner planner(database, graph);
+    graph.addCourse(101);
+    graph.addCourse(201);
+    graph.addCourse(301);
+    graph.addCourse(401);
 
-    int choice;
+    // 101 is prerequisite of 201
+    graph.addPrerequisite(201, 101);
 
-    do
+    // 201 is prerequisite of 301
+    graph.addPrerequisite(301, 201);
+
+    // 101 is prerequisite of 401
+    graph.addPrerequisite(401, 101);
+
+    graph.displayPrerequisites(301);
+
+    graph.displayDependents(101);
+
+    cout << "\n";
+
+    graph.BFS(101);
+    graph.DFS(101);
+
+    cout << "\nCycle exists: ";
+
+    if (graph.hasCycle())
+        cout << "Yes";
+    else
+        cout << "No";
+
+    cout << "\n\nTopological Order: ";
+
+    DynamicArray<int> order;
+
+    if (graph.topologicalSort(order))
     {
-        cout << "\n===== SMART COURSE PLANNER =====\n";
-        cout << "1. Administrator\n";
-        cout << "2. Student\n";
-        cout << "3. Exit\n";
-
-        cout << "Enter choice: ";
-        cin >> choice;
-
-        switch (choice)
+        for (int i = 0; i < order.size(); i++)
         {
-            case 1:
-                adminMenu();
-                break;
-
-            case 2:
-                studentMenu();
-                break;
-
-            case 3:
-                cout << "Exiting program...\n";
-                break;
-
-            default:
-                cout << "Invalid choice!\n";
+            cout << order.get(i) << " ";
         }
+    }
+    else
+    {
+        cout << "Cannot generate order.";
+    }
 
-    } while (choice != 3);
+    cout << "\n\nTrying to create a cycle:\n";
+
+    if (graph.addPrerequisite(101, 301))
+        cout << "Prerequisite added.";
+    else
+        cout << "Rejected because it creates a cycle.";
+
+    cout << endl;
 
     return 0;
 }
