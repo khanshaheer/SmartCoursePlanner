@@ -1,32 +1,57 @@
 # Smart Course Planner
 
-A Data Structures and Algorithms-based university course planning system developed in C++.
+A console-based C++ application that helps university students manage their academic progress and understand course prerequisites.
 
-## Project Overview
+## Project Features
 
-Smart Course Planner helps university students plan their courses by managing prerequisites, tracking completed courses, and identifying eligible courses.
+### Administrator
+- Add, update, delete and search courses.
+- Manage prerequisite relationships.
+- Display course information.
+- Detect circular prerequisite dependencies.
 
-## Planned Features
-
-- Course management
-- Prerequisite management
-- BFS and DFS traversal
-- Cycle detection
-- Topological sorting
-- Course eligibility checking
-- Sorting and searching
+### Student
+- View available courses.
+- Mark courses as completed.
+- Check course eligibility.
+- View missing prerequisites.
+- Generate a valid course-completion order.
 
 ## Technologies
-
 - C++
 - Data Structures and Algorithms
-- Visual Studio Code
+- VS Code
+- Git and GitHub
 
-## Team Members
+## DSA Concepts
+- Dynamic Arrays
+- Linked Lists
+- Stacks and Queues
+- Graphs, BFS and DFS
+- Topological Sorting
+- Cycle Detection
+- Hash Tables and Rehashing
+- Bubble, Insertion, Selection, Comb and Shell Sort
+- Brute Force and KMP String Searching
+- Pointers and Rule of Three
 
-- Shaheer
-- Teammate
+## Team Responsibilities
 
-## Project Status
+### Member 1 — Graph Module
+- Graph representation and adjacency lists
+- BFS and DFS
+- Topological sorting
+- Cycle detection
+- Prerequisite management
 
-Development in progress.
+### Member 2 — Course Database Module
+- Course class and records
+- Dynamic arrays
+- Course database operations
+- Hash tables and rehashing
+- Sorting and string searching
+
+Both members will collaborate on integration, student planning, testing and documentation.
+
+## Development Status
+Project structure and interfaces are being prepared. Implementation will proceed module by module.
