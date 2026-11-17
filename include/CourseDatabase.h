@@ -1,13 +1,16 @@
+
 #ifndef COURSE_DATABASE_H
 #define COURSE_DATABASE_H
 
 #include "Course.h"
 #include "DynamicArray.h"
+#include "HashTable.h"
 
 class CourseDatabase
 {
 private:
     DynamicArray<Course> courses;
+    HashTable hashTable;
 
 public:
     bool addCourse(const Course& course);
@@ -25,6 +28,10 @@ public:
     void displayAll() const;
 
     int getCount() const;
+
+    void sortByID();
+
+    bool searchByName(string name, Course& result) const;
 };
 
 #endif
