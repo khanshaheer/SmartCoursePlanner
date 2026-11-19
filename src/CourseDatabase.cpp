@@ -146,6 +146,16 @@ int CourseDatabase::getCount() const
 {
     return courses.size();
 }
+bool CourseDatabase::getCourseAt(int index, Course& result) const
+{
+    if (index < 0 || index >= courses.size())
+    {
+        return false;
+    }
+
+    result = courses.get(index);
+    return true;
+}
 void mergeCourses(
     DynamicArray<Course>& courses,
     Course* temp,

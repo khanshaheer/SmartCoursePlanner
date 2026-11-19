@@ -28,6 +28,8 @@ public:
     void displayAll() const;
 
     int getCount() const;
+    
+    bool getCourseAt(int index, Course& result) const;
 
     void sortByID();
 
