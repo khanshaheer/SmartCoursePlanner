@@ -119,6 +119,7 @@ void StudentPlanner::displayEligibleCourses() const
 }
 
 
+
 void StudentPlanner::displayLockedCourses() const
 {
     Course course;
@@ -130,11 +131,31 @@ void StudentPlanner::displayLockedCourses() const
     {
         if (database.getCourseAt(i, course))
         {
-            if (!course.isCompleted() &&
-                !isEligible(course.getID()))
+            if (!course.isCompleted() && !isEligible(course.getID()))
             {
-                cout << course.getCode() << " - "
-                     << course.getName() << endl;
+                cout << "\n" << course.getCode()
+                     << " - " << course.getName() << endl;
+
+                DynamicArray<int> prerequisites;
+
+                if (graph.getPrerequisites(course.getID(), prerequisites))
+                {
+                    cout << "Missing Prerequisites:" << endl;
+
+                    for (int j = 0; j < prerequisites.size(); j++)
+                    {
+                        Course prerequisite;
+
+                        if (database.searchByID(prerequisites.get(j), prerequisite))
+                        {
+                            if (!prerequisite.isCompleted())
+                            {
+                                cout << "- " << prerequisite.getCode()
+                                     << " - " << prerequisite.getName() << endl;
+                            }
+                        }
+                    }
+                }
 
                 found = true;
             }
@@ -146,6 +167,7 @@ void StudentPlanner::displayLockedCourses() const
         cout << "No locked courses." << endl;
     }
 }
+
 
 
 void StudentPlanner::generateRemainingPath() const

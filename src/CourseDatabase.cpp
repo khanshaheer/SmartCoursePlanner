@@ -1,8 +1,9 @@
 #include "CourseDatabase.h"
+#include "Sorting.h"
+#include "StringSearch.h"
 #include <iostream>
 #include <cctype>
 using namespace std;
-
 
 bool CourseDatabase::addCourse(const Course& course)
 {
@@ -265,4 +266,81 @@ bool CourseDatabase::searchByName(string name, Course& result) const
     }
 
     return false;
+}
+void CourseDatabase::bubbleSort()
+{
+    Sorting::bubbleSort(courses);
+}
+
+void CourseDatabase::insertionSort()
+{
+    Sorting::insertionSort(courses);
+}
+
+void CourseDatabase::selectionSort()
+{
+    Sorting::selectionSort(courses);
+}
+
+void CourseDatabase::combSort()
+{
+    Sorting::combSort(courses);
+}
+
+void CourseDatabase::shellSort()
+{
+    Sorting::shellSort(courses);
+}
+
+void CourseDatabase::searchByText(string pattern, int choice) const
+{
+    if (pattern.empty())
+    {
+        cout << "Search text cannot be empty." << endl;
+        return;
+    }
+
+    for (int i = 0; i < pattern.length(); i++)
+    {
+        pattern[i] = tolower((unsigned char)pattern[i]);
+    }
+
+    bool found = false;
+
+    for (int i = 0; i < courses.size(); i++)
+    {
+        string courseName = courses.get(i).getName();
+
+        for (int j = 0; j < courseName.length(); j++)
+        {
+            courseName[j] = tolower((unsigned char)courseName[j]);
+        }
+
+        int result = -1;
+
+        if (choice == 1)
+        {
+            result = StringSearch::bruteForce(courseName, pattern);
+        }
+        else if (choice == 2)
+        {
+            result = StringSearch::KMP(courseName, pattern);
+        }
+
+        if (result != -1)
+        {
+            cout << "\nCourse found:" << endl;
+            cout << "ID: " << courses.get(i).getID() << endl;
+            cout << "Code: " << courses.get(i).getCode() << endl;
+            cout << "Name: " << courses.get(i).getName() << endl;
+            cout << "Credits: " << courses.get(i).getCreditHours() << endl;
+
+            found = true;
+        }
+    }
+
+    if (!found)
+    {
+        cout << "No matching courses found." << endl;
+    }
 }

@@ -28,12 +28,19 @@ public:
     void displayAll() const;
 
     int getCount() const;
-    
+
     bool getCourseAt(int index, Course& result) const;
 
     void sortByID();
+    void bubbleSort();
+    void insertionSort();
+    void selectionSort();
+    void combSort();
+    void shellSort();
 
     bool searchByName(string name, Course& result) const;
+
+    void searchByText(string pattern, int choice) const;
 };
 
 #endif
