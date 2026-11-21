@@ -3,7 +3,7 @@
 #include <iostream>
 using namespace std;
 
-
+// Keep references to the same objects owned by main; no course or graph copy is made.
 StudentPlanner::StudentPlanner(
     CourseDatabase& db,
     CourseGraph& g
@@ -12,7 +12,8 @@ StudentPlanner::StudentPlanner(
 {
 }
 
-
+// Validate that the course exists and each direct prerequisite is present and
+// completed before asking CourseDatabase to update both copies of the record.
 bool StudentPlanner::markCompleted(int courseID)
 {
     Course course;
@@ -28,6 +29,7 @@ bool StudentPlanner::markCompleted(int courseID)
         return false;
     }
 
+    // A missing database record signals inconsistent data and is treated as a blocker.
     for (int i = 0; i < prerequisites.size(); i++)
     {
         Course prerequisite;
@@ -41,7 +43,7 @@ bool StudentPlanner::markCompleted(int courseID)
     return database.setCompleted(courseID, true);
 }
 
-
+// Scan the database array and print records whose shared completion flag is true.
 void StudentPlanner::displayCompletedCourses() const
 {
     Course course;
@@ -66,7 +68,8 @@ void StudentPlanner::displayCompletedCourses() const
     }
 }
 
-
+// Eligibility here means the course exists, is not completed, and all direct
+// prerequisite records exist and are complete. A missing graph vertex is ineligible.
 bool StudentPlanner::isEligible(int courseID) const
 {
     Course course;
@@ -106,7 +109,7 @@ bool StudentPlanner::isEligible(int courseID) const
     return true;
 }
 
-
+// Check each record through isEligible and print only courses a student can take now.
 void StudentPlanner::displayEligibleCourses() const
 {
     Course course;
@@ -135,7 +138,8 @@ void StudentPlanner::displayEligibleCourses() const
 }
 
 
-
+// A locked course is incomplete but fails isEligible. Print each direct prerequisite
+// that is still incomplete so the student can see what blocks the course.
 void StudentPlanner::displayLockedCourses() const
 {
     Course course;
@@ -186,6 +190,8 @@ void StudentPlanner::displayLockedCourses() const
 
 
 
+// Ask the graph for a topological ordering. A false result means a cycle exists;
+// otherwise print only incomplete courses, preserving prerequisite-before-dependent order.
 void StudentPlanner::generateRemainingPath() const
 {
     DynamicArray<int> order;
@@ -202,6 +208,8 @@ void StudentPlanner::generateRemainingPath() const
 
     bool found = false;
 
+    // Completed courses are skipped, but their place in the ordering has already
+    // ensured that any remaining dependents appear after them.
     for (int i = 0; i < order.size(); i++)
     {
         Course course;

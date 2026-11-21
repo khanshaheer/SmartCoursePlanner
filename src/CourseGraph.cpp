@@ -3,14 +3,15 @@
 #include "GraphQueue.h"
 #include "GraphStack.h"
 
-// Constructor
+// Create an empty graph: there is no first vertex and the recorded vertex count is zero.
 CourseGraph::CourseGraph()
 {
     head = NULL;
     vertexCount = 0;
 }
 
-// Find a vertex using its course ID
+// Walk the vertex linked list and return the node with courseID.
+// The caller does not own the returned pointer; it remains owned by this graph.
 CourseGraph::Vertex* CourseGraph::findVertex(int courseID) const
 {
     Vertex* current = head;
@@ -28,7 +29,8 @@ CourseGraph::Vertex* CourseGraph::findVertex(int courseID) const
     return NULL;
 }
 
-// Destructor
+// Release every adjacency edge before deleting its vertex. Each next pointer is
+// saved before delete because reading a deleted node would be invalid.
 CourseGraph::~CourseGraph()
 {
     Vertex* current = head;
@@ -54,7 +56,8 @@ CourseGraph::~CourseGraph()
     vertexCount = 0;
 }
 
-// Add a course as a vertex
+// Add one positive course ID as a vertex. The graph owns the new node, and a
+// duplicate ID is rejected so each course has exactly one vertex.
 bool CourseGraph::addCourse(int courseID)
 {
     if (courseID <= 0 || findVertex(courseID) != NULL)
@@ -62,6 +65,7 @@ bool CourseGraph::addCourse(int courseID)
         return false;
     }
 
+    // Allocate a detached vertex first, then link it at the end of the vertex list.
     Vertex* newVertex = new Vertex(courseID);
 
     if (head == NULL)
@@ -85,7 +89,8 @@ bool CourseGraph::addCourse(int courseID)
     return true;
 }
 
-// Remove a course and all its connections
+// Remove the vertex and all graph relationships involving it. First unlink every
+// incoming edge from other vertices; then unlink and destroy its own outgoing list.
 bool CourseGraph::removeCourse(int courseID)
 {
     Vertex* target = findVertex(courseID);
@@ -95,7 +100,8 @@ bool CourseGraph::removeCourse(int courseID)
         return false;
     }
 
-    // Remove edges pointing towards this course
+    // Edges point prerequisite -> dependent, so incoming edges identify this course
+    // as the dependent at the edge destination.
     Vertex* current = head;
 
     while (current != NULL)
@@ -131,7 +137,7 @@ bool CourseGraph::removeCourse(int courseID)
         current = current->next;
     }
 
-    // Remove the vertex itself
+    // Unlink the target vertex from the head or from its previous vertex.
     Vertex* previous = NULL;
     current = head;
 
@@ -150,7 +156,7 @@ bool CourseGraph::removeCourse(int courseID)
         previous->next = current->next;
     }
 
-    // Delete its outgoing edges
+    // The target owns its outgoing edges; free those nodes before freeing target.
     Edge* edge = current->firstEdge;
 
     while (edge != NULL)
@@ -167,7 +173,8 @@ bool CourseGraph::removeCourse(int courseID)
 }
 
 
-// Add a prerequisite relationship
+// Add prerequisiteID -> courseID. Both vertices must exist, a self-edge and
+// duplicate edge are invalid, and any new directed cycle is rolled back.
 bool CourseGraph::addPrerequisite(int courseID, int prerequisiteID)
 {
     Vertex* course = findVertex(courseID);
@@ -198,13 +205,14 @@ bool CourseGraph::addPrerequisite(int courseID, int prerequisiteID)
         current = current->next;
     }
 
-    // Create edge from prerequisite to course
+    // Store the edge on the prerequisite vertex so traversal follows toward dependents.
     Edge* newEdge = new Edge(courseID);
 
     newEdge->next = prerequisite->firstEdge;
     prerequisite->firstEdge = newEdge;
 
-    // Reject the edge if it creates a cycle
+    // Checking after insertion tests the complete proposed graph. If cyclic, remove
+    // the just-added edge to restore the previous graph exactly.
     if (hasCycle())
     {
         removePrerequisite(courseID, prerequisiteID);
@@ -214,7 +222,8 @@ bool CourseGraph::addPrerequisite(int courseID, int prerequisiteID)
     return true;
 }
 
-// Remove a prerequisite relationship
+// Find and unlink the edge prerequisiteID -> courseID from the prerequisite's list.
+// A missing prerequisite vertex or missing edge leaves the graph unchanged.
 bool CourseGraph::removePrerequisite(int courseID, int prerequisiteID)
 {
     Vertex* prerequisite = findVertex(prerequisiteID);
@@ -253,7 +262,8 @@ bool CourseGraph::removePrerequisite(int courseID, int prerequisiteID)
 
 
 
-// Display prerequisites of a course
+// Prerequisites are incoming edges, so scan every source vertex's adjacency list
+// and print source IDs whose edge destination is courseID.
 void CourseGraph::displayPrerequisites(int courseID) const
 {
     if (findVertex(courseID) == NULL)
@@ -293,7 +303,7 @@ void CourseGraph::displayPrerequisites(int courseID) const
     cout << endl;
 }
 
-// Display courses that depend on this course
+// Dependents are outgoing edges stored directly at courseID's vertex.
 void CourseGraph::displayDependents(int courseID) const
 {
     Vertex* current = findVertex(courseID);
@@ -322,7 +332,8 @@ void CourseGraph::displayDependents(int courseID) const
     cout << endl;
 }
 
-// Return prerequisites through a DynamicArray
+// Replace result with the source IDs of all incoming edges. Clearing first makes
+// this function safe when the caller reuses an array from an earlier query.
 bool CourseGraph::getPrerequisites(
     int courseID,
     DynamicArray<int>& result
@@ -361,7 +372,9 @@ bool CourseGraph::getPrerequisites(
 }
 
 
-// Breadth First Search
+// Breadth-first traversal follows prerequisite -> dependent edges. The queue visits
+// nearer reachable courses before farther ones; visited prevents repeated enqueueing.
+// The custom array's linear membership checks add overhead beyond ideal O(V+E) BFS.
 void CourseGraph::BFS(int startID) const
 {
     if (findVertex(startID) == NULL)
@@ -373,6 +386,7 @@ void CourseGraph::BFS(int startID) const
     GraphQueue queue;
     DynamicArray<int> visited;
 
+    // Seed the search with its start vertex and mark it before adding more vertices.
     queue.enqueue(startID);
     visited.pushBack(startID);
 
@@ -385,6 +399,7 @@ void CourseGraph::BFS(int startID) const
 
         cout << currentID << " ";
 
+        // Find each reached vertex and inspect its outgoing dependent-course edges.
         Vertex* current = findVertex(currentID);
         Edge* edge = current->firstEdge;
 
@@ -415,7 +430,8 @@ void CourseGraph::BFS(int startID) const
 }
 
 
-// Depth First Search
+// Iterative depth-first traversal uses the custom LIFO stack rather than recursion.
+// IDs are marked when popped; duplicate pending IDs may be pushed, then skipped later.
 void CourseGraph::DFS(int startID) const
 {
     if (findVertex(startID) == NULL)
@@ -427,6 +443,8 @@ void CourseGraph::DFS(int startID) const
     GraphStack stack;
     DynamicArray<int> visited;
 
+    // Begin with the requested vertex. Popping a vertex makes its outgoing neighbors
+    // the next work items, so the most recently pushed neighbor is explored first.
     stack.push(startID);
 
     cout << "DFS Traversal: ";
@@ -452,6 +470,7 @@ void CourseGraph::DFS(int startID) const
             continue;
         }
 
+        // Mark only when popped; a later duplicate stack entry will be ignored.
         visited.pushBack(currentID);
         cout << currentID << " ";
 
@@ -469,13 +488,15 @@ void CourseGraph::DFS(int startID) const
 }
 
 
-// Check whether an ID exists in an array
+// DFS helper for directed cycle detection. visited records vertices already explored;
+// active records only the current recursion route. An edge back to active is a cycle.
 bool CourseGraph::dfsCycleCheck(
     Vertex* vertex,
     DynamicArray<int>& visited,
     DynamicArray<int>& active
 ) const
 {
+    // Enter this recursion branch by marking the vertex globally and on the active path.
     visited.pushBack(vertex->courseID);
     active.pushBack(vertex->courseID);
 
@@ -496,6 +517,7 @@ bool CourseGraph::dfsCycleCheck(
             }
         }
 
+        // A back-edge to the current recursion path closes a directed cycle.
         if (inActive)
         {
             return true;
@@ -512,6 +534,7 @@ bool CourseGraph::dfsCycleCheck(
             }
         }
 
+        // A fully explored vertex cannot reveal a new cycle from this branch.
         if (!inVisited)
         {
             Vertex* nextVertex = findVertex(nextID);
@@ -538,7 +561,7 @@ bool CourseGraph::dfsCycleCheck(
     return false;
 }
 
-// Check the entire graph for a cycle
+// Start directed DFS from every not-yet-visited vertex, including disconnected parts.
 bool CourseGraph::hasCycle() const
 {
     DynamicArray<int> visited;
@@ -575,7 +598,9 @@ bool CourseGraph::hasCycle() const
 
 
 
-// Topological Sort using Kahn's Algorithm
+// Kahn's algorithm repeatedly removes a zero-indegree course. Because edges point
+// prerequisite -> dependent, a course enters the queue only after its prerequisites
+// have been processed. False means a cycle prevented processing every vertex.
 bool CourseGraph::topologicalSort(DynamicArray<int>& order) const
 {
     // Make sure the output array starts empty
@@ -598,7 +623,7 @@ bool CourseGraph::topologicalSort(DynamicArray<int>& order) const
         current = current->next;
     }
 
-    // Calculate indegree of every vertex
+    // Count incoming prerequisites for every destination vertex.
     current = head;
 
     while (current != NULL)
@@ -624,7 +649,7 @@ bool CourseGraph::topologicalSort(DynamicArray<int>& order) const
 
     GraphQueue queue;
 
-    // Add all vertices with indegree zero
+    // No incoming edges means no remaining prerequisite blocks the course.
     for (int i = 0; i < vertexIDs.size(); i++)
     {
         if (indegree.get(i) == 0)
@@ -633,7 +658,7 @@ bool CourseGraph::topologicalSort(DynamicArray<int>& order) const
         }
     }
 
-    // Process vertices
+    // Removing a prerequisite from the active graph lowers each dependent's indegree.
     while (!queue.isEmpty())
     {
         int currentID;
@@ -665,7 +690,7 @@ bool CourseGraph::topologicalSort(DynamicArray<int>& order) const
         }
     }
 
-    // If not all vertices were processed, a cycle exists
+    // A cycle keeps every vertex in it above indegree zero, so fewer than V are output.
     if (order.size() != vertexCount)
     {
         while (!order.isEmpty())
@@ -679,7 +704,7 @@ bool CourseGraph::topologicalSort(DynamicArray<int>& order) const
     return true;
 }
 
-// Return number of vertices
+// Return the maintained vertex count; edge counts are not included.
 int CourseGraph::getVertexCount() const
 {
     return vertexCount;
