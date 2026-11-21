@@ -1,29 +1,127 @@
-
 #include <iostream>
+#include <sstream>
 #include <string>
 #include "CourseDatabase.h"
 #include "CourseGraph.h"
 #include "StudentPlanner.h"
-#include "StringSearch.h"
 
 using namespace std;
 
-void displayCourse(const Course &course)
+bool readInt(const string& prompt, int& value)
 {
-    cout << "ID: " << course.getID() << endl;
-    cout << "Code: " << course.getCode() << endl;
-    cout << "Name: " << course.getName() << endl;
-    cout << "Credit Hours: " << course.getCreditHours() << endl;
-
-    cout << "Completed: ";
-
-    if (course.isCompleted())
+    string line;
+    while (true)
     {
-        cout << "Yes" << endl;
+        cout << prompt;
+        if (!getline(cin, line))
+        {
+            return false;
+        }
+        stringstream input(line);
+        char extra;
+        if (input >> value && !(input >> extra))
+        {
+            return true;
+        }
+        cout << "Please enter a whole number.\n";
+    }
+}
+
+bool readText(const string& prompt, string& value)
+{
+    while (true)
+    {
+        cout << prompt;
+        if (!getline(cin, value))
+        {
+            return false;
+        }
+        if (value.find_first_not_of(" \t\r\n") != string::npos)
+        {
+            return true;
+        }
+        cout << "This value cannot be empty.\n";
+    }
+}
+
+void displayCourse(const Course& course)
+{
+    cout << "ID: " << course.getID() << "\n"
+         << "Code: " << course.getCode() << "\n"
+         << "Name: " << course.getName() << "\n"
+         << "Credit Hours: " << course.getCreditHours() << "\n"
+         << "Completed: " << (course.isCompleted() ? "Yes" : "No") << "\n";
+}
+
+void searchCourse(const CourseDatabase& database)
+{
+    int choice;
+    if (!readInt("1. Search by ID\n2. Search by course code\n3. Search by name\nChoice: ", choice)) return;
+    Course course;
+    bool found = false;
+    if (choice == 1)
+    {
+        int id;
+        if (!readInt("Enter course ID: ", id)) return;
+        found = database.searchByID(id, course);
+    }
+    else if (choice == 2)
+    {
+        string code;
+        if (!readText("Enter course code: ", code)) return;
+        found = database.searchByCode(code, course);
+    }
+    else if (choice == 3)
+    {
+        string name;
+        if (!readText("Enter all or part of the course name: ", name)) return;
+        found = database.searchByName(name, course);
     }
     else
     {
-        cout << "No" << endl;
+        cout << "Invalid search choice.\n";
+        return;
+    }
+    if (found) displayCourse(course);
+    else cout << "Course not found.\n";
+}
+
+void searchCourseName(const CourseDatabase& database)
+{
+    int method;
+    if (!readInt("1. Brute Force\n2. KMP\nChoose search method: ", method)) return;
+    if (method != 1 && method != 2)
+    {
+        cout << "Invalid search method.\n";
+        return;
+    }
+    string pattern;
+    if (readText("Enter text to find in course names: ", pattern))
+    {
+        database.searchByText(pattern, method);
+    }
+}
+
+void showCourseMenus(bool instructor)
+{
+    cout << "\nSMART COURSE PLANNER - " << (instructor ? "INSTRUCTOR" : "STUDENT") << "\n";
+    if (instructor)
+    {
+        cout << "1. Add Course\n2. Update Course\n3. Delete Course\n"
+             << "4. Search Course\n5. Display All Courses\n6. Add Prerequisite\n"
+             << "7. Remove Prerequisite\n8. Display Prerequisites and Dependents\n"
+             << "9. BFS and DFS Traversal\n10. Mark Course as Completed\n"
+             << "11. Display Completed Courses\n12. Sort Courses\n"
+             << "13. Check for Prerequisite Cycle\n"
+             << "14. Search Course Name (Brute Force / KMP)\n0. Back to Main Menu\n";
+    }
+    else
+    {
+        cout << "1. Display All Courses\n2. Search Course\n"
+             << "3. Display Completed Courses\n4. Display Eligible Courses\n"
+             << "5. Display Locked Courses\n6. Display Prerequisites and Dependents\n"
+             << "7. BFS and DFS Traversal\n8. Generate Remaining Academic Path\n"
+             << "9. Search Course Name (Brute Force / KMP)\n0. Back to Main Menu\n";
     }
 }
 
@@ -32,368 +130,134 @@ int main()
     CourseDatabase database;
     CourseGraph graph;
     StudentPlanner planner(database, graph);
-
-    int choice;
-
-    do
+    while (true)
     {
-        cout << "\n========== SMART COURSE PLANNER ==========\n";
-        cout << "1. Add Course\n";
-        cout << "2. Update Course\n";
-        cout << "3. Delete Course\n";
-        cout << "4. Search Course\n";
-        cout << "5. Display All Courses\n";
-        cout << "6. Add Prerequisite\n";
-        cout << "7. Remove Prerequisite\n";
-        cout << "8. Display Prerequisites and Dependents\n";
-        cout << "9. BFS and DFS Traversal\n";
-        cout << "10. Mark Course as Completed\n";
-        cout << "11. Display Completed Courses\n";
-        cout << "12. Display Eligible Courses\n";
-        cout << "13. Display Locked Courses\n";
-        cout << "14. Generate Remaining Academic Path\n";
-        cout << "15. Sort Courses" << endl;
-        cout << "16. Check for Prerequisite Cycle\n";
-        cout << "17. Search Course Name (Brute Force / KMP)\n";
-        cout << "0. Exit\n";
-
-        cout << "Enter your choice: ";
-        cin >> choice;
-
-        if (choice == 1)
+        cout << "\nSMART COURSE PLANNER\n1. Instructor\n2. Student\n0. Exit\n";
+        int role;
+        if (!readInt("Select role: ", role)) break;
+        if (role == 0) break;
+        if (role != 1 && role != 2)
         {
-            int id;
-            int credits;
-            string code;
-            string name;
+            cout << "Invalid role. Please choose 1, 2, or 0.\n";
+            continue;
+        }
+        const bool instructor = role == 1;
+        bool inRoleMenu = true;
+        while (inRoleMenu)
+        {
+            showCourseMenus(instructor);
+            int choice;
+            if (!readInt("Enter your choice: ", choice)) return 0;
+            if (choice == 0) break;
 
-            cout << "Enter course ID: ";
-            cin >> id;
-
-            cout << "Enter course code: ";
-            getline(cin >> ws, code);
-
-            cout << "Enter course name: ";
-            getline(cin >> ws, name);
-
-            cout << "Enter credit hours: ";
-            cin >> credits;
-
-            Course course(id, code, name, credits);
-
-            if (database.addCourse(course))
+            if (instructor && choice == 1)
             {
-                if (graph.addCourse(id))
+                int id, credits;
+                string code, name;
+                if (!readInt("Enter positive course ID: ", id) ||
+                    !readText("Enter course code: ", code) ||
+                    !readText("Enter course name: ", name) ||
+                    !readInt("Enter credit hours (1-6): ", credits)) return 0;
+                Course course(id, code, name, credits);
+                if (database.addCourse(course))
                 {
-                    cout << "Course added successfully.\n";
+                    if (graph.addCourse(id)) cout << "Course added successfully.\n";
+                    else { database.deleteCourse(id); cout << "Could not add course to graph; database change was rolled back.\n"; }
                 }
-                else
+                else cout << "Course was not added. Check that the ID and code are unique, ID is positive, and credits are 1-6.\n";
+            }
+            else if (instructor && choice == 2)
+            {
+                int id, credits;
+                string code, name;
+                if (!readInt("Enter course ID to update: ", id)) return 0;
+                Course existing;
+                if (!database.searchByID(id, existing)) { cout << "Course not found.\n"; continue; }
+                if (!readText("Enter new course code: ", code) || !readText("Enter new course name: ", name) ||
+                    !readInt("Enter new credit hours (1-6): ", credits)) return 0;
+                if (database.updateCourse(id, code, name, credits)) cout << "Course updated successfully.\n";
+                else cout << "Update failed. Check duplicate code, non-empty fields, and credit hours (1-6).\n";
+            }
+            else if (instructor && choice == 3)
+            {
+                int id;
+                if (!readInt("Enter course ID to delete: ", id)) return 0;
+                if (database.deleteCourse(id)) { graph.removeCourse(id); cout << "Course and prerequisite relationships deleted.\n"; }
+                else cout << "Course not found.\n";
+            }
+            else if ((instructor && choice == 4) || (!instructor && choice == 2)) searchCourse(database);
+            else if ((instructor && choice == 5) || (!instructor && choice == 1))
+            {
+                if (database.getCount() == 0) cout << "No courses available.\n";
+                else database.displayAll();
+            }
+            else if (instructor && (choice == 6 || choice == 7))
+            {
+                int courseID, prerequisiteID;
+                if (!readInt("Enter course ID: ", courseID) || !readInt("Enter prerequisite course ID: ", prerequisiteID)) return 0;
+                Course course, prerequisite;
+                if (!database.searchByID(courseID, course) || !database.searchByID(prerequisiteID, prerequisite))
+                    cout << "Both course IDs must exist.\n";
+                else if (choice == 6)
                 {
-                    database.deleteCourse(id);
-                    cout << "Could not add course to graph.\n";
+                    if (graph.addPrerequisite(courseID, prerequisiteID)) cout << "Prerequisite added: " << prerequisiteID << " -> " << courseID << ".\n";
+                    else cout << "Prerequisite not added. Check for self-links, duplicates, or a cycle.\n";
                 }
+                else if (graph.removePrerequisite(courseID, prerequisiteID)) cout << "Prerequisite removed.\n";
+                else cout << "That prerequisite relationship does not exist.\n";
             }
-            else
+            else if ((instructor && choice == 8) || (!instructor && choice == 6))
             {
-                cout << "Course ID or code already exists.\n";
+                int id;
+                if (!readInt("Enter course ID: ", id)) return 0;
+                graph.displayPrerequisites(id);
+                graph.displayDependents(id);
             }
-        }
-
-        else if (choice == 2)
-        {
-            int id;
-
-            cout << "Enter course ID to update: ";
-            cin >> id;
-
-            if (database.updateCourse(id))
+            else if ((instructor && choice == 9) || (!instructor && choice == 7))
             {
-                cout << "Course updated successfully.\n";
+                int id;
+                if (!readInt("Enter starting course ID: ", id)) return 0;
+                graph.BFS(id);
+                graph.DFS(id);
             }
-            else
+            else if (instructor && choice == 10)
             {
-                cout << "Course not found.\n";
+                int id;
+                if (!readInt("Enter course ID to mark completed: ", id)) return 0;
+                Course course;
+                if (!database.searchByID(id, course)) cout << "Course not found.\n";
+                else if (course.isCompleted()) cout << "Course is already marked completed.\n";
+                else if (planner.markCompleted(id)) cout << "Course marked as completed.\n";
+                else cout << "Cannot complete this course yet. Complete all prerequisites first.\n";
             }
-        }
-
-        else if (choice == 3)
-        {
-            int id;
-
-            cout << "Enter course ID to delete: ";
-            cin >> id;
-
-            if (database.deleteCourse(id))
+            else if ((instructor && choice == 11) || (!instructor && choice == 3)) planner.displayCompletedCourses();
+            else if (!instructor && choice == 4) planner.displayEligibleCourses();
+            else if (!instructor && choice == 5) planner.displayLockedCourses();
+            else if (!instructor && choice == 8) planner.generateRemainingPath();
+            else if (instructor && choice == 12)
             {
-                graph.removeCourse(id);
-                cout << "Course deleted successfully.\n";
-            }
-            else
-            {
-                cout << "Course not found.\n";
-            }
-        }
-
-        else if (choice == 4)
-        {
-            int searchChoice;
-            Course course;
-
-            cout << "1. Search by course code\n";
-            cout << "2. Search by course name\n";
-            cout << "Enter choice: ";
-            cin >> searchChoice;
-
-            if (searchChoice == 1)
-            {
-                string code;
-
-                cout << "Enter course code: ";
-                getline(cin >> ws, code);
-
-                if (database.searchByCode(code, course))
+                int method;
+                if (!readInt("1. Merge Sort\n2. Bubble Sort\n3. Insertion Sort\n4. Selection Sort\n5. Comb Sort\n6. Shell Sort\nChoose sorting algorithm: ", method)) return 0;
+                switch (method)
                 {
-                    displayCourse(course);
+                    case 1: database.sortByID(); break;
+                    case 2: database.bubbleSort(); break;
+                    case 3: database.insertionSort(); break;
+                    case 4: database.selectionSort(); break;
+                    case 5: database.combSort(); break;
+                    case 6: database.shellSort(); break;
+                    default: cout << "Invalid sorting choice.\n"; continue;
                 }
-                else
-                {
-                    cout << "Course not found.\n";
-                }
+                cout << "Courses sorted by ID.\n";
+                if (database.getCount() == 0) cout << "No courses available.\n";
+                else database.displayAll();
             }
-            else if (searchChoice == 2)
-            {
-                string name;
-
-                cout << "Enter course name or part of name: ";
-                getline(cin >> ws, name);
-
-                if (database.searchByName(name, course))
-                {
-                    displayCourse(course);
-                }
-                else
-                {
-                    cout << "Course not found.\n";
-                }
-            }
-            else
-            {
-                cout << "Invalid search choice.\n";
-            }
+            else if (instructor && choice == 13)
+                cout << (graph.hasCycle() ? "A prerequisite cycle exists.\n" : "No prerequisite cycle exists.\n");
+            else if ((instructor && choice == 14) || (!instructor && choice == 9)) searchCourseName(database);
+            else cout << "Invalid menu choice for this role.\n";
         }
-
-        else if (choice == 5)
-        {
-            if (database.getCount() == 0)
-            {
-                cout << "No courses available.\n";
-            }
-            else
-            {
-                database.displayAll();
-            }
-        }
-
-        else if (choice == 6)
-        {
-            int courseID;
-            int prerequisiteID;
-
-            cout << "Enter course ID: ";
-            cin >> courseID;
-
-            cout << "Enter prerequisite course ID: ";
-            cin >> prerequisiteID;
-
-            if (graph.addPrerequisite(courseID, prerequisiteID))
-            {
-                cout << "Prerequisite added successfully.\n";
-            }
-            else
-            {
-                cout << "Could not add prerequisite. Check IDs, duplicates or cycles.\n";
-            }
-        }
-
-        else if (choice == 7)
-        {
-            int courseID;
-            int prerequisiteID;
-
-            cout << "Enter course ID: ";
-            cin >> courseID;
-
-            cout << "Enter prerequisite course ID: ";
-            cin >> prerequisiteID;
-
-            if (graph.removePrerequisite(courseID, prerequisiteID))
-            {
-                cout << "Prerequisite removed successfully.\n";
-            }
-            else
-            {
-                cout << "Prerequisite relationship not found.\n";
-            }
-        }
-
-        else if (choice == 8)
-        {
-            int id;
-
-            cout << "Enter course ID: ";
-            cin >> id;
-
-            graph.displayPrerequisites(id);
-            graph.displayDependents(id);
-        }
-
-        else if (choice == 9)
-        {
-            int id;
-
-            cout << "Enter starting course ID: ";
-            cin >> id;
-
-            graph.BFS(id);
-            graph.DFS(id);
-        }
-
-        else if (choice == 10)
-        {
-            int id;
-
-            cout << "Enter course ID to mark completed: ";
-            cin >> id;
-
-            if (planner.markCompleted(id))
-            {
-                cout << "Course marked as completed.\n";
-            }
-            else
-            {
-                cout << "Course not found.\n";
-            }
-        }
-
-        else if (choice == 11)
-        {
-            planner.displayCompletedCourses();
-        }
-
-        else if (choice == 12)
-        {
-            planner.displayEligibleCourses();
-        }
-
-        else if (choice == 13)
-        {
-            planner.displayLockedCourses();
-        }
-
-        else if (choice == 14)
-        {
-            planner.generateRemainingPath();
-        }
-
-        else if (choice == 15)
-        {
-            int sortChoice;
-
-            cout << "\n===== SORT COURSES =====\n";
-            cout << "1. Merge Sort\n";
-            cout << "2. Bubble Sort\n";
-            cout << "3. Insertion Sort\n";
-            cout << "4. Selection Sort\n";
-            cout << "5. Comb Sort\n";
-            cout << "6. Shell Sort\n";
-
-            cout << "Enter your choice: ";
-            cin >> sortChoice;
-
-            switch (sortChoice)
-            {
-            case 1:
-                database.sortByID();
-                break;
-
-            case 2:
-                database.bubbleSort();
-                break;
-
-            case 3:
-                database.insertionSort();
-                break;
-
-            case 4:
-                database.selectionSort();
-                break;
-
-            case 5:
-                database.combSort();
-                break;
-
-            case 6:
-                database.shellSort();
-                break;
-
-            default:
-                cout << "Invalid sorting choice.\n";
-                break;
-            }
-
-            if (sortChoice >= 1 && sortChoice <= 6)
-            {
-                cout << "\nCourses after sorting:\n";
-                database.displayAll();
-            }
-        }
-
-        else if (choice == 16)
-        {
-            if (graph.hasCycle())
-            {
-                cout << "A prerequisite cycle exists.\n";
-            }
-            else
-            {
-                cout << "No prerequisite cycle exists.\n";
-            }
-        }
-        else if (choice == 17)
-        {
-            string pattern;
-            int searchChoice;
-
-            cout << "\n===== STRING SEARCH =====\n";
-            cout << "1. Brute Force\n";
-            cout << "2. KMP\n";
-            cout << "Enter your choice: ";
-            cin >> searchChoice;
-
-            if (searchChoice != 1 && searchChoice != 2)
-            {
-                cout << "Invalid search choice." << endl;
-                continue;
-            }
-
-            cin.ignore();
-
-            cout << "Enter text to search in course names: ";
-            getline(cin, pattern);
-
-            database.searchByText(pattern, searchChoice);
-        }
-        else if (choice == 0)
-        {
-            cout << "Thank you for using Smart Course Planner.\n";
-        }
-
-        else
-        {
-            cout << "Invalid choice. Please try again.\n";
-        }
-
-    } while (choice != 0);
-
+    }
+    cout << "Thank you for using Smart Course Planner.\n";
     return 0;
 }

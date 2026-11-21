@@ -36,6 +36,9 @@ public:
         }
     }
 
+    GraphQueue(const GraphQueue&) = delete;
+    GraphQueue& operator=(const GraphQueue&) = delete;
+
     bool isEmpty() const
     {
         return frontNode == NULL;

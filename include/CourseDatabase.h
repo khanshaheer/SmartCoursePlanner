@@ -16,6 +16,8 @@ public:
     bool addCourse(const Course& course);
 
     bool updateCourse(int id);
+    bool updateCourse(int id, const string& newCode,
+                      const string& newName, int newCredits);
 
     bool deleteCourse(int id);
 

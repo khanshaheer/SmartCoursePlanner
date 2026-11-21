@@ -1,0 +1,8 @@
+# Windows application and compiler output
+*.exe
+*.obj
+*.o
+
+# Local build folders and temporary review artifacts
+build/
+review_test.cpp

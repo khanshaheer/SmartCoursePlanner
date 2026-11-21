@@ -3,10 +3,23 @@
 #include "StringSearch.h"
 #include <iostream>
 #include <cctype>
+#include <limits>
 using namespace std;
+
+static bool hasVisibleText(const string& text)
+{
+    return text.find_first_not_of(" \t\r\n") != string::npos;
+}
 
 bool CourseDatabase::addCourse(const Course& course)
 {
+    if (course.getID() <= 0 || !hasVisibleText(course.getCode()) ||
+        !hasVisibleText(course.getName()) || course.getCreditHours() < 1 ||
+        course.getCreditHours() > 6)
+    {
+        return false;
+    }
+
     Course temp;
 
     if (searchByID(course.getID(), temp))
@@ -20,7 +33,11 @@ bool CourseDatabase::addCourse(const Course& course)
     }
 
     courses.pushBack(course);
-    hashTable.insert(course);
+    if (!hashTable.insert(course))
+    {
+        courses.removeAt(courses.size() - 1);
+        return false;
+    }
 
     return true;
 }
@@ -36,25 +53,61 @@ bool CourseDatabase::updateCourse(int id)
         return false;
     }
 
+    string newCode = course.getCode();
     string newName;
     int newCredits;
+
+    cout << "Enter new course code: ";
+    getline(cin >> ws, newCode);
 
     cout << "Enter new course name: ";
     getline(cin >> ws, newName);
 
     cout << "Enter new credit hours: ";
-    cin >> newCredits;
+    if (!(cin >> newCredits))
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Invalid credit-hour input.\n";
+        return false;
+    }
+
+    return updateCourse(id, newCode, newName, newCredits);
+}
+
+bool CourseDatabase::updateCourse(int id, const string& newCode,
+                                  const string& newName, int newCredits)
+{
+    if (!hasVisibleText(newCode) || !hasVisibleText(newName) ||
+        newCredits < 1 || newCredits > 6)
+    {
+        return false;
+    }
+
+    Course duplicate;
+    if (searchByCode(newCode, duplicate) && duplicate.getID() != id)
+    {
+        return false;
+    }
 
     for (int i = 0; i < courses.size(); i++)
     {
         if (courses.get(i).getID() == id)
         {
-            courses.get(i).setName(newName);
-            courses.get(i).setCreditHours(newCredits);
-
-            hashTable.remove(id);
-            hashTable.insert(courses.get(i));
-
+            Course updated = courses.get(i);
+            updated.setCode(newCode);
+            updated.setName(newName);
+            updated.setCreditHours(newCredits);
+            if (!hashTable.remove(id))
+            {
+                return false;
+            }
+            if (!hashTable.insert(updated))
+            {
+                hashTable.insert(courses.get(i));
+                return false;
+            }
+            courses.get(i) = updated;
             return true;
         }
     }
@@ -70,7 +123,10 @@ bool CourseDatabase::deleteCourse(int id)
     {
         if (courses.get(i).getID() == id)
         {
-            hashTable.remove(id);
+            if (!hashTable.remove(id))
+            {
+                return false;
+            }
             courses.removeAt(i);
 
             return true;
@@ -108,10 +164,18 @@ bool CourseDatabase::setCompleted(int id, bool status)
     {
         if (courses.get(i).getID() == id)
         {
-            courses.get(i).setCompleted(status);
-
-            hashTable.remove(id);
-            hashTable.insert(courses.get(i));
+            Course updated = courses.get(i);
+            updated.setCompleted(status);
+            if (!hashTable.remove(id))
+            {
+                return false;
+            }
+            if (!hashTable.insert(updated))
+            {
+                hashTable.insert(courses.get(i));
+                return false;
+            }
+            courses.get(i) = updated;
 
             return true;
         }
@@ -244,18 +308,18 @@ bool CourseDatabase::searchByName(string name, Course& result) const
         return false;
     }
 
+    for (size_t k = 0; k < name.length(); k++)
+    {
+        name[k] = static_cast<char>(tolower(static_cast<unsigned char>(name[k])));
+    }
+
     for (int i = 0; i < courses.size(); i++)
     {
         string courseName = courses.get(i).getName();
 
-        for (int k = 0; k < courseName.length(); k++)
+        for (size_t k = 0; k < courseName.length(); k++)
         {
             courseName[k] = tolower((unsigned char)courseName[k]);
-        }
-
-        for (int k = 0; k < name.length(); k++)
-        {
-            name[k] = tolower((unsigned char)name[k]);
         }
 
         if (courseName.find(name) != string::npos)
@@ -300,7 +364,13 @@ void CourseDatabase::searchByText(string pattern, int choice) const
         return;
     }
 
-    for (int i = 0; i < pattern.length(); i++)
+    if (choice != 1 && choice != 2)
+    {
+        cout << "Invalid string-search choice." << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < pattern.length(); i++)
     {
         pattern[i] = tolower((unsigned char)pattern[i]);
     }
@@ -311,7 +381,7 @@ void CourseDatabase::searchByText(string pattern, int choice) const
     {
         string courseName = courses.get(i).getName();
 
-        for (int j = 0; j < courseName.length(); j++)
+        for (size_t j = 0; j < courseName.length(); j++)
         {
             courseName[j] = tolower((unsigned char)courseName[j]);
         }

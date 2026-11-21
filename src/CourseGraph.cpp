@@ -57,7 +57,7 @@ CourseGraph::~CourseGraph()
 // Add a course as a vertex
 bool CourseGraph::addCourse(int courseID)
 {
-    if (findVertex(courseID) != NULL)
+    if (courseID <= 0 || findVertex(courseID) != NULL)
     {
         return false;
     }
@@ -331,6 +331,11 @@ bool CourseGraph::getPrerequisites(
     if (findVertex(courseID) == NULL)
     {
         return false;
+    }
+
+    while (!result.isEmpty())
+    {
+        result.removeAt(result.size() - 1);
     }
 
     Vertex* current = head;

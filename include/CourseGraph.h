@@ -52,6 +52,8 @@ public:
 
     CourseGraph();
     ~CourseGraph();
+    CourseGraph(const CourseGraph&) = delete;
+    CourseGraph& operator=(const CourseGraph&) = delete;
 
     bool addCourse(int courseID);
     bool removeCourse(int courseID);

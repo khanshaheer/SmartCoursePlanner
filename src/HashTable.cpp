@@ -1,7 +1,19 @@
 
 #include "HashTable.h"
 #include <iostream>
+#include <cctype>
 using namespace std;
+
+static string normalizeCode(const string& code)
+{
+    string normalized = code;
+    for (size_t i = 0; i < normalized.length(); i++)
+    {
+        normalized[i] = static_cast<char>(tolower(
+            static_cast<unsigned char>(normalized[i])));
+    }
+    return normalized;
+}
 
 HashTable::HashTable(int size)
 {
@@ -52,23 +64,25 @@ HashTable& HashTable::operator=(const HashTable& other)
 {
     if (this != &other)
     {
+        Course* newTable = new Course[other.capacity];
+        bool* newOccupied = new bool[other.capacity];
+        bool* newDeleted = new bool[other.capacity];
+
+        for (int i = 0; i < other.capacity; i++)
+        {
+            newTable[i] = other.table[i];
+            newOccupied[i] = other.occupied[i];
+            newDeleted[i] = other.deleted[i];
+        }
+
         delete[] table;
         delete[] occupied;
         delete[] deleted;
-
+        table = newTable;
+        occupied = newOccupied;
+        deleted = newDeleted;
         capacity = other.capacity;
         count = other.count;
-
-        table = new Course[capacity];
-        occupied = new bool[capacity];
-        deleted = new bool[capacity];
-
-        for (int i = 0; i < capacity; i++)
-        {
-            table[i] = other.table[i];
-            occupied[i] = other.occupied[i];
-            deleted[i] = other.deleted[i];
-        }
     }
 
     return *this;
@@ -77,10 +91,11 @@ HashTable& HashTable::operator=(const HashTable& other)
 int HashTable::hashFunction(const string& code) const
 {
     unsigned long long value = 0;
+    string normalized = normalizeCode(code);
 
-    for (int i = 0; i < code.length(); i++)
+    for (size_t i = 0; i < normalized.length(); i++)
     {
-        value = value * 31 + code[i];
+        value = value * 31 + static_cast<unsigned char>(normalized[i]);
     }
 
     return value % capacity;
@@ -151,6 +166,7 @@ bool HashTable::insert(const Course& course)
 
 bool HashTable::searchByCode(string code, Course& result) const
 {
+    code = normalizeCode(code);
     int index = hashFunction(code);
 
     for (int i = 0; i < capacity; i++)
@@ -162,7 +178,7 @@ bool HashTable::searchByCode(string code, Course& result) const
             return false;
         }
 
-        if (occupied[current] && table[current].getCode() == code)
+        if (occupied[current] && normalizeCode(table[current].getCode()) == code)
         {
             result = table[current];
             return true;

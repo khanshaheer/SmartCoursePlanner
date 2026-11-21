@@ -29,6 +29,7 @@ public:
     void setName(string name);
     void setCreditHours(int credits);
     void setCompleted(bool status);
+    void setCode(string code);
 };
 
 #endif

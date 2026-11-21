@@ -22,6 +22,22 @@ bool StudentPlanner::markCompleted(int courseID)
         return false;
     }
 
+    DynamicArray<int> prerequisites;
+    if (!graph.getPrerequisites(courseID, prerequisites))
+    {
+        return false;
+    }
+
+    for (int i = 0; i < prerequisites.size(); i++)
+    {
+        Course prerequisite;
+        if (!database.searchByID(prerequisites.get(i), prerequisite) ||
+            !prerequisite.isCompleted())
+        {
+            return false;
+        }
+    }
+
     return database.setCompleted(courseID, true);
 }
 

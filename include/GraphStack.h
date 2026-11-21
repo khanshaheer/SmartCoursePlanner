@@ -34,6 +34,9 @@ public:
         }
     }
 
+    GraphStack(const GraphStack&) = delete;
+    GraphStack& operator=(const GraphStack&) = delete;
+
     bool isEmpty() const
     {
         return topNode == NULL;

@@ -57,3 +57,8 @@ void Course::setCompleted(bool status)
 {
     completed = status;
 }
+
+void Course::setCode(string newCode)
+{
+    code = newCode;
+}
