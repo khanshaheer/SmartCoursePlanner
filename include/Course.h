@@ -18,11 +18,11 @@ private:
 
 public:
     // Create an empty/default record. The implementation uses ID and credits 0.
-    Course();
+    Course(){};
 
     // Create a course record from its identifying details. Completion starts false.
     Course(int id, string code,
-           string name, int credits);
+           string name, int credits){};
 
     // Read-only getters return copies of the requested course fields.
     int getID() const;

@@ -4,14 +4,20 @@
 
 // Linked-list FIFO queue used by BFS and topological sorting. The queue owns
 // each node until dequeue removes it or the destructor drains the remaining nodes.
+
+/*It is particularly important because your Graph Module uses this queue in:
+1. BFS (Breadth-First Search).
+2. Topological Sorting (Kahn's Algorithm).*/
+
 class GraphQueue
+
 {
 private:
     // One queued course ID and the link to the following queue node.
-    struct Node
+    struct Node//node of our queue
     {
         int data;     // Course ID held by this queue position.
-        Node* next;   // Next position toward the rear, or NULL at the end.
+        Node* next;   // stoers addres of next node
 
         Node(int value)
         {
@@ -20,8 +26,8 @@ private:
         }
     };
 
-    Node* frontNode; // Node that dequeue removes next.
-    Node* rearNode;  // Last node, where enqueue appends in O(1) time.
+    Node* frontNode; // Points to the first node, which will be removed next
+    Node* rearNode;  // Points to the last node, where new nodes are added
 
 public:
     // Start with no nodes; both ends are NULL.
@@ -32,7 +38,7 @@ public:
     }
 
     // Repeatedly dequeue so every remaining node is deleted.
-    ~GraphQueue()
+    ~GraphQueue()//Because we create nodes dynamically using new.
     {
         int value;
 
@@ -42,6 +48,16 @@ public:
     }
 
     // Nodes are owned by this queue, so copying is disabled to prevent shared pointers.
+    // It means we prevent copying of GraphQueue objects.
+    /*
+    If we copied the queue normally, both objects could point to the same dynamically allocated nodes.
+
+Then both destructors might try to delete the same memory.
+
+That creates a memory-management problem.
+
+So we disable copying.
+    */
     GraphQueue(const GraphQueue&) = delete;
     GraphQueue& operator=(const GraphQueue&) = delete;
 

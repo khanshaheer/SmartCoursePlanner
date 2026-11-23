@@ -4,6 +4,7 @@
 
 // Linked-list LIFO stack used by iterative DFS. Every pushed node is owned by
 // this stack and is deleted when popped or when the stack is destroyed.
+// We use this stack in our project's DFS (Depth-First Search) algorithm.
 class GraphStack
 {
 private:
