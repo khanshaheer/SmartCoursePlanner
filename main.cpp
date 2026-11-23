@@ -130,8 +130,7 @@ void showCourseMenus(bool instructor)
              << "7. Remove Prerequisite\n8. Display Prerequisites and Dependents\n"
              << "9. BFS and DFS Traversal\n10. Mark Course as Completed\n"
              << "11. Display Completed Courses\n12. Sort Courses\n"
-             << "13. Check for Prerequisite Cycle\n"
-             << "14. Search Course Name (Brute Force / KMP)\n0. Back to Main Menu\n";
+             << "13. Search Course Name (Brute Force / KMP)\n0. Back to Main Menu\n";
     }
     else
     {
@@ -349,11 +348,8 @@ int main()
                 else
                     database.displayAll();
             }
-            // A successful prerequisite add already rejects cycles; this option reports graph state.
-            else if (instructor && choice == 13)
-                cout << (graph.hasCycle() ? "A prerequisite cycle exists.\n" : "No prerequisite cycle exists.\n");
             // Brute Force and KMP are available to either role through the same wrapper.
-            else if ((instructor && choice == 14) || (!instructor && choice == 9))
+            else if ((instructor && choice == 13) || (!instructor && choice == 9))
                 searchCourseName(database);
             else
                 cout << "Invalid menu choice for this role.\n";
